@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Get all videos",
+      "method": "GET",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "videos": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get shorts",
+      "method": "GET",
+      "queryParams": {
+        "type": "shorts"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "videos": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

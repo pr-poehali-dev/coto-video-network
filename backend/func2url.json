@@ -1,4 +1,6 @@
 {
+  "upload": "https://functions.poehali.dev/307ed6e2-cc59-4c7e-b4d1-6ddbb3dee3bf",
+  "streams": "https://functions.poehali.dev/52c1c5ab-bed7-453b-9802-a8b13f44afb9",
   "videos": "https://functions.poehali.dev/fa48306d-1510-47e3-8f94-61eae012759d",
   "auth": "https://functions.poehali.dev/cbec4d45-e9c8-4241-baa0-4d59e14431b0"
 }

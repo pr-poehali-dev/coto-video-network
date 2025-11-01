@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "Upload video",
+      "method": "POST",
+      "body": {
+        "user_id": 1,
+        "title": "Test Video",
+        "description": "Test description",
+        "thumbnail_url": "https://example.com/thumb.jpg",
+        "video_url": "https://example.com/video.mp4",
+        "duration": "10:30",
+        "is_short": false
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "video": {
+          "id": "number",
+          "title": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

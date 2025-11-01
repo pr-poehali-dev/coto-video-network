@@ -1,0 +1,32 @@
+{
+  "tests": [
+    {
+      "name": "Get live streams",
+      "method": "GET",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "streams": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Start stream",
+      "method": "POST",
+      "body": {
+        "action": "start",
+        "user_id": 1,
+        "title": "Test Stream",
+        "description": "Test description"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "stream": {
+          "id": "number",
+          "stream_key": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

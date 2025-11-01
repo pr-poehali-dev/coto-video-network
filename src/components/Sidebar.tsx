@@ -10,6 +10,7 @@ interface SidebarProps {
 const menuItems = [
   { id: 'home', label: 'Главная', icon: 'Home' },
   { id: 'shorts', label: 'Shorts', icon: 'Play' },
+  { id: 'live', label: 'Трансляции', icon: 'Radio' },
   { id: 'subscriptions', label: 'Подписки', icon: 'Folder' },
 ];
 

@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedHeaders": {
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
+      "name": "GET all videos",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "videos": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET shorts videos",
+      "method": "GET",
+      "path": "/?type=shorts",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "videos": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

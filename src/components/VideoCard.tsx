@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Icon from '@/components/ui/icon';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 interface VideoCardProps {
   video: {
@@ -20,8 +21,18 @@ interface VideoCardProps {
 }
 
 export default function VideoCard({ video, onClick }: VideoCardProps) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      navigate(`/watch/${video.id}`);
+    }
+  };
+
   return (
-    <div className="cursor-pointer group" onClick={onClick}>
+    <div className="cursor-pointer group" onClick={handleClick}>
       <div className="relative aspect-video rounded-xl overflow-hidden bg-muted mb-3">
         <img
           src={video.thumbnail}

@@ -4,6 +4,7 @@ import Sidebar from '@/components/Sidebar';
 import VideoCard from '@/components/VideoCard';
 import ShortCard from '@/components/ShortCard';
 import StreamCard from '@/components/StreamCard';
+import UploadShortDialog from '@/components/UploadShortDialog';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -17,6 +18,7 @@ export default function Index() {
   const [activeTab, setActiveTab] = useState('home');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showUploadShortDialog, setShowUploadShortDialog] = useState(false);
   const [showStreamDialog, setShowStreamDialog] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -319,19 +321,34 @@ export default function Index() {
           <div className="p-6 max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold mb-6">Загрузить контент</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div 
+                onClick={() => {
+                  if (!currentUser) {
+                    toast({ title: 'Войдите чтобы загрузить видео', variant: 'destructive' });
+                    return;
+                  }
+                  setShowUploadShortDialog(true);
+                }}
+                className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+              >
+                <Icon name="Smartphone" size={48} className="mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">Загрузить Short</h3>
+                <p className="text-sm text-muted-foreground">Вертикальное видео до 30 сек</p>
+              </div>
+
               <div 
                 onClick={() => setShowUploadDialog(true)}
-                className="border-2 border-dashed border-border rounded-xl p-12 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
               >
                 <Icon name="Upload" size={48} className="mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-lg font-medium mb-2">Загрузить видео</h3>
-                <p className="text-sm text-muted-foreground">Добавьте готовое видео</p>
+                <p className="text-sm text-muted-foreground">Полноценное видео</p>
               </div>
 
               <div 
                 onClick={() => setShowStreamDialog(true)}
-                className="border-2 border-dashed border-primary/50 rounded-xl p-12 text-center cursor-pointer hover:bg-primary/5 transition-colors"
+                className="border-2 border-dashed border-primary/50 rounded-xl p-8 text-center cursor-pointer hover:bg-primary/5 transition-colors"
               >
                 <Icon name="Radio" size={48} className="mx-auto mb-4 text-primary" />
                 <h3 className="text-lg font-medium mb-2">Начать трансляцию</h3>
@@ -399,6 +416,16 @@ export default function Index() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <UploadShortDialog 
+        open={showUploadShortDialog}
+        onOpenChange={setShowUploadShortDialog}
+        userId={currentUser?.id || 0}
+        onSuccess={() => {
+          loadShorts();
+          toast({ title: 'Short успешно загружен!' });
+        }}
+      />
 
       <Dialog open={showStreamDialog} onOpenChange={setShowStreamDialog}>
         <DialogContent>

@@ -21,36 +21,108 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Auth-Token',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
         }
     
     if method == 'POST':
-        body_data = json.loads(event.get('body', '{}'))
+        headers = event.get('headers', {})
+        user_id = headers.get('X-User-Id') or headers.get('x-user-id')
         
-        user_id = body_data.get('user_id')
-        title = body_data.get('title')
-        description = body_data.get('description', '')
-        thumbnail_url = body_data.get('thumbnail_url', '')
-        video_url = body_data.get('video_url', '')
-        duration = body_data.get('duration', '0:00')
-        is_short = body_data.get('is_short', False)
+        if not user_id:
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': 'Необходима авторизация'})
+            }
+        
+        body_data = json.loads(event.get('body', '{}'))
+        title = body_data.get('title', 'Без названия')
+        video_base64 = body_data.get('video')
+        thumbnail_base64 = body_data.get('thumbnail')
+        
+        if not video_base64:
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': 'Видео не найдено'})
+            }
+        
+        video_data = base64.b64decode(video_base64)
+        video_id = str(uuid.uuid4())
+        video_key = f'shorts/{video_id}.mp4'
+        
+        s3_client = boto3.client(
+            's3',
+            endpoint_url=os.environ.get('S3_ENDPOINT'),
+            aws_access_key_id=os.environ.get('S3_ACCESS_KEY'),
+            aws_secret_access_key=os.environ.get('S3_SECRET_KEY')
+        )
+        
+        bucket = os.environ.get('S3_BUCKET', 'cotovideo')
+        
+        s3_client.put_object(
+            Bucket=bucket,
+            Key=video_key,
+            Body=video_data,
+            ContentType='video/mp4'
+        )
+        
+        video_url = f"{os.environ.get('S3_ENDPOINT')}/{bucket}/{video_key}"
+        
+        thumbnail_url = None
+        if thumbnail_base64:
+            thumbnail_data = base64.b64decode(thumbnail_base64)
+            thumbnail_key = f'shorts/thumbnails/{video_id}.jpg'
+            
+            s3_client.put_object(
+                Bucket=bucket,
+                Key=thumbnail_key,
+                Body=thumbnail_data,
+                ContentType='image/jpeg'
+            )
+            
+            thumbnail_url = f"{os.environ.get('S3_ENDPOINT')}/{bucket}/{thumbnail_key}"
         
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
         cur.execute(
-            """
-            INSERT INTO videos (user_id, title, description, thumbnail_url, video_url, duration, is_short)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, title, thumbnail_url, video_url, created_at
-            """,
-            (user_id, title, description, thumbnail_url, video_url, duration, is_short)
+            "SELECT username, avatar_url FROM users WHERE id = %s",
+            (user_id,)
+        )
+        user = cur.fetchone()
+        
+        if not user:
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 404,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': 'Пользователь не найден'})
+            }
+        
+        cur.execute(
+            """INSERT INTO videos 
+            (user_id, title, video_url, thumbnail_url, video_type, channel_name, channel_avatar, duration) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) 
+            RETURNING id""",
+            (int(user_id), title, video_url, thumbnail_url, 'shorts', 
+             user['username'], user['avatar_url'], '00:00:30')
         )
         
-        video = dict(cur.fetchone())
+        video_db_id = cur.fetchone()['id']
         conn.commit()
         
         cur.close()
@@ -63,9 +135,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'success': True,
-                'video': video
-            }, default=str)
+                'id': video_db_id,
+                'video_url': video_url,
+                'thumbnail_url': thumbnail_url,
+                'message': 'Видео успешно загружено'
+            })
         }
     
     return {

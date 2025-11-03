@@ -43,8 +43,9 @@ export default function Index() {
     setLoading(true);
     try {
       const data = await api.getVideos('all');
-      setVideos(data.videos);
+      setVideos(data.videos || []);
     } catch (error) {
+      setVideos([]);
       toast({ title: 'Ошибка загрузки видео', variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -54,8 +55,9 @@ export default function Index() {
   const loadShorts = async () => {
     try {
       const data = await api.getVideos('shorts');
-      setShorts(data.videos);
+      setShorts(data.videos || []);
     } catch (error) {
+      setShorts([]);
       console.error('Failed to load shorts');
     }
   };
@@ -63,8 +65,9 @@ export default function Index() {
   const loadStreams = async () => {
     try {
       const data = await api.getStreams();
-      setStreams(data.streams);
+      setStreams(data.streams || []);
     } catch (error) {
+      setStreams([]);
       console.error('Failed to load streams');
     }
   };

@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function Index() {
   const [activeTab, setActiveTab] = useState('home');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showUploadShortDialog, setShowUploadShortDialog] = useState(false);
   const [showStreamDialog, setShowStreamDialog] = useState(false);
@@ -362,24 +363,64 @@ export default function Index() {
         )}
       </main>
 
-      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+      <Dialog open={showAuthDialog} onOpenChange={(open) => {
+        setShowAuthDialog(open);
+        if (!open) setIsRegistering(false);
+      }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Войти в CotoVideo</DialogTitle>
+            <DialogTitle>{isRegistering ? 'Регистрация' : 'Войти в CotoVideo'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="your@email.com" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Пароль</Label>
-              <Input id="password" name="password" type="password" placeholder="••••••••" required />
-            </div>
-            <Button type="submit" className="w-full">
-              Войти
-            </Button>
-          </form>
+          
+          {!isRegistering ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" placeholder="your@email.com" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Пароль</Label>
+                <Input id="password" name="password" type="password" placeholder="••••••••" required />
+              </div>
+              <Button type="submit" className="w-full">
+                Войти
+              </Button>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                className="w-full"
+                onClick={() => setIsRegistering(true)}
+              >
+                Нет аккаунта? Зарегистрироваться
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="register-username">Имя пользователя</Label>
+                <Input id="register-username" name="username" placeholder="YourName" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="register-email">Email</Label>
+                <Input id="register-email" name="email" type="email" placeholder="your@email.com" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="register-password">Пароль</Label>
+                <Input id="register-password" name="password" type="password" placeholder="••••••••" required />
+              </div>
+              <Button type="submit" className="w-full">
+                Зарегистрироваться
+              </Button>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                className="w-full"
+                onClick={() => setIsRegistering(false)}
+              >
+                Уже есть аккаунт? Войти
+              </Button>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 

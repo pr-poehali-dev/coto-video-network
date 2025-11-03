@@ -18,6 +18,9 @@ export default function Index() {
   const [activeTab, setActiveTab] = useState('home');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Video[]>([]);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showUploadShortDialog, setShowUploadShortDialog] = useState(false);
   const [showStreamDialog, setShowStreamDialog] = useState(false);
@@ -116,6 +119,41 @@ export default function Index() {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+
+    try {
+      const result = await api.resetPassword(email);
+      if (result.message) {
+        toast({ title: result.message });
+        setIsForgotPassword(false);
+        setShowAuthDialog(false);
+      } else {
+        toast({ title: result.error || 'Ошибка', variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Ошибка соединения', variant: 'destructive' });
+    }
+  };
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      try {
+        const data = await api.searchVideos(query);
+        setSearchResults(data.videos || []);
+        setActiveTab('search');
+      } catch (error) {
+        console.error('Search failed');
+        setSearchResults([]);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
+
   const handleStartStream = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -150,8 +188,9 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       <Header 
-        currentUser={currentUser}
+        currentUser={currentUser ? { name: currentUser.username, avatar: currentUser.avatar_url } : null}
         onAuthClick={() => setShowAuthDialog(true)}
+        onSearch={handleSearch}
       />
 
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
@@ -299,6 +338,37 @@ export default function Index() {
           </div>
         )}
 
+        {activeTab === 'search' && (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-6">
+              Результаты поиска: "{searchQuery}"
+            </h2>
+            {searchResults.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {searchResults.map((video) => (
+                  <VideoCard 
+                    key={video.id} 
+                    video={{
+                      id: String(video.id),
+                      title: video.title,
+                      thumbnail: video.thumbnail_url,
+                      channel: { name: video.channel_name, avatar: video.channel_avatar },
+                      views: video.views,
+                      createdAt: new Date(video.created_at),
+                      duration: video.duration,
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Icon name="Search" size={64} className="mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground">Ничего не найдено по запросу "{searchQuery}"</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'favorites' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-6">Избранное</h2>
@@ -365,14 +435,40 @@ export default function Index() {
 
       <Dialog open={showAuthDialog} onOpenChange={(open) => {
         setShowAuthDialog(open);
-        if (!open) setIsRegistering(false);
+        if (!open) {
+          setIsRegistering(false);
+          setIsForgotPassword(false);
+        }
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isRegistering ? 'Регистрация' : 'Войти в CotoVideo'}</DialogTitle>
+            <DialogTitle>
+              {isForgotPassword ? 'Восстановление пароля' : isRegistering ? 'Регистрация' : 'Войти в CotoVideo'}
+            </DialogTitle>
           </DialogHeader>
           
-          {!isRegistering ? (
+          {isForgotPassword ? (
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input id="reset-email" name="email" type="email" placeholder="your@email.com" required />
+                <p className="text-sm text-muted-foreground">
+                  Мы отправим инструкции по восстановлению на этот адрес
+                </p>
+              </div>
+              <Button type="submit" className="w-full">
+                Отправить
+              </Button>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                className="w-full"
+                onClick={() => setIsForgotPassword(false)}
+              >
+                Назад к входу
+              </Button>
+            </form>
+          ) : !isRegistering ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -384,6 +480,14 @@ export default function Index() {
               </div>
               <Button type="submit" className="w-full">
                 Войти
+              </Button>
+              <Button 
+                type="button" 
+                variant="link" 
+                className="w-full text-sm"
+                onClick={() => setIsForgotPassword(true)}
+              >
+                Забыли пароль?
               </Button>
               <Button 
                 type="button" 

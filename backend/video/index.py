@@ -33,6 +33,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         params = event.get('queryStringParameters') or {}
         video_id = params.get('id')
         video_type = params.get('type')
+        search_query = params.get('search')
+        
+        if search_query:
+            search_term = f"%{search_query}%"
+            cur.execute(
+                """SELECT v.*, 
+                   (SELECT COUNT(*) FROM video_likes WHERE video_id = v.id) as likes_count,
+                   (SELECT COUNT(*) FROM video_views WHERE video_id = v.id) as views
+                   FROM videos v 
+                   WHERE v.title ILIKE %s OR v.description ILIKE %s OR v.channel_name ILIKE %s
+                   ORDER BY v.created_at DESC 
+                   LIMIT 50""",
+                (search_term, search_term, search_term)
+            )
+            videos = [dict(row) for row in cur.fetchall()]
+            
+            cur.close()
+            conn.close()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'videos': videos})
+            }
         
         if video_id:
             cur.execute(

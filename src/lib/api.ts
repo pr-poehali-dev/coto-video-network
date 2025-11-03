@@ -60,6 +60,29 @@ export const api = {
     return response.json();
   },
 
+  async resetPassword(email: string) {
+    const response = await fetch(API_URLS.auth, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset_password', email }),
+    });
+    return response.json();
+  },
+
+  async confirmReset(token: string, password: string) {
+    const response = await fetch(API_URLS.auth, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'confirm_reset', token, password }),
+    });
+    return response.json();
+  },
+
+  async searchVideos(query: string): Promise<{ videos: Video[] }> {
+    const response = await fetch(`${API_URLS.videos}?search=${encodeURIComponent(query)}`);
+    return response.json();
+  },
+
   async getVideos(type: 'all' | 'shorts' = 'all'): Promise<{ videos: Video[] }> {
     const url = type === 'shorts' 
       ? `${API_URLS.videos}?type=shorts`
